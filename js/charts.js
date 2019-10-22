@@ -166,12 +166,99 @@ function draw_bar(xbar,y_max,only_data, margin, svg_hw, tip_shift, tag_id ,color
     svg.append("g")
     .call(yAxis);
 
-    return [svg_x,svg_y];
+    return [svg_x,svg_y,svg,svg_tooltip];
 
 }
-// function split_bar(xbar, y_max, first_data, second_data, tip_shift, tag_id, color) {
+function set_splitbar(bar_svgs, xbar, y_max, first_data, second_data, second_xbar, margin, svg_hw, tip_shift, tag_id, color) {
+    var svgs = bar_svgs;
+    var svg = svgs[2];
+    var svg_tooltip = svgs[3];
 
-// }
+    svg.selectAll("rect")
+        .on("click", function (d, i) {
+
+            // 设置所有原要素为透明
+            var origin_bar = d3.select(this)
+                .attr("opacity",0) // 设置透明
+                .on("mouseover", function () {
+                tooltip.style('display', "none");})
+
+            var split_data = second_data[i];
+            console.log(split_data);
+            var new_xbar = second_xbar[i];
+            console.log(new_xbar);
+
+            var left_bound = parseFloat(d3.select(this).attr("x"));
+            var right_bound = parseFloat(d3.select(this).attr("width")) + left_bound;
+            // 定义新的x轴分割方法
+            var new_x = d3.scaleBand()
+                .domain(new_xbar)
+                .range([left_bound, right_bound])
+                .padding(0.1)
+            // console.log(d3.mouse(this));
+
+           var new_xAxis = g => g
+                .attr("transform", `translate(0,${svg_hw.height - margin.bottom * 2})`) // 这里可以调整二级xbar的位置
+                .call(d3.axisBottom(new_x).tickSizeOuter(0))
+                .call(g => g.selectAll(".domain").remove())
+
+
+            var new_g = svg.append("g")
+                        .attr("transform","translate(0,0)")
+                        .attr("class","split_data"); //设置一个class名，方便进行批量操作（比如批量删除）
+
+            new_g.selectAll("rect")
+                .data(split_data)
+                .join("rect")
+                // .transition()
+                .attr("x",(d, i) => new_x(new_xbar[i]))
+                .attr("y", d => svgs[1](d))
+                .attr("fill", (d, i) => origin_bar.attr('fill'))
+                .attr("height", d => svgs[1](0) - svgs[1](d))
+                .attr("width", new_x.bandwidth())
+                .attr("opacity",1)
+                // .attr("class",String(d3.select(this).attr("x")));
+            new_g.append("g")
+                .call(new_xAxis);
+
+            var tooltip = svg.append("g")
+                .style("display", "none")
+            tooltip.append("text")
+                .attr("x", 15)
+                .attr("dy", "1.2em")
+                .style("text-anchor", "middle")
+                .attr("font-size", "30px")
+                .attr("font-weight", "bold");
+
+            var new_rects = new_g.selectAll("rect")
+                            .on("mouseover", function () {
+                            tooltip.style('display', null);})
+                            .on("mouseout", function () {
+                            tooltip.style('display', "none")})
+                            .on("mousemove", function (d, i) {
+                                var xPosition = d3.mouse(this)[0] - tip_shift.right;
+                                var yPosition = d3.mouse(this)[1] - tip_shift.top;
+                                tooltip.attr("transform", "translate(" + xPosition + "," + yPosition + ")");
+                                tooltip.select("text").text(new_xbar[i] + " : " + String(d));
+                            })
+                            .on("click", function(d, i)
+                            {
+                                origin_bar.transition()
+                                .attr("opacity",1);
+                                origin_bar
+                                .on("mouseover", function () {
+                                    svgs[3].style('display', null);})
+
+                                tooltip.remove()
+                                new_g.remove();
+                            })
+
+        })
+
+
+    return svgs 
+
+}
 
 var state_age_data = d3.csv("data/us-population-state-age.csv", (d, i, columns) => (d3.autoType(d), d.total = d3.sum(columns, c => d[c]), d))
     .then(function(data){
@@ -193,6 +280,8 @@ var state_age_data = d3.csv("data/us-population-state-age.csv", (d, i, columns) 
     var svg2_xy = draw_bar(svg2_xbar, svg2_y_max, each_data, margin, svg2_hw, tip_shift, "#bar-2", color);
 
     var svg3_xy = draw_bar(svg2_xbar, svg3_y_max, each_data, margin, svg2_hw, tip_shift, "#bar-3", color);
+
+    
 
     // 绑定第一个图标的按键
     d3.select("#bar-1")
@@ -236,111 +325,45 @@ var state_age_data = d3.csv("data/us-population-state-age.csv", (d, i, columns) 
                             .attr("height", d => svg2_xy[1](0) - svg2_xy[1](d))
                             .attr("width", svg2_xy[0].bandwidth())
                             .attr("opacity",1);
-                        d3.select("#bar-3")
-                            .select(".split_data")
-                            .remove()
-                        d3.select("#bar-3")
-                            .selectAll("rect")
-                            .data(new_each_data)
-                            .transition()
-                            .attr("x", (d, i) => svg3_xy[0](svg2_xbar[i]))
-                            .attr("y", d => svg3_xy[1](d))
-                            .attr("fill", (d, i) => color(svg2_xbar[i]))
-                            .attr("height", d => svg3_xy[1](0) - svg3_xy[1](d))
-                            .attr("width", svg3_xy[0].bandwidth())
-                            .attr("opacity",1);
+
+                        //初始化一个测试用的data
+                        var all_xbar = "abcdefghijklmnopqrstuvwxyz";
+                        var second_data = [];
+                        var second_xbar = [];
+                        for (var ii = 0; ii < new_each_data.length; ii++) {
+                            var this_data = [];
+                            var this_xbar = [];
+                            for (var jj = 0; jj < ii + 2; jj++) {
+                                this_data.push(new_each_data[ii] / (ii + 2));
+                                this_xbar.push(all_xbar[jj]);
+                            }
+                            second_data.push(this_data);
+                            second_xbar.push(this_xbar);
+                        }
+
+                        // TODO:严重bug——使用了remove逻辑来更新图表，失去动画效果
+                        svg3_xy[2].remove();
+                        svg3_xy = draw_bar(svg2_xbar, svg3_y_max, new_each_data, margin, svg2_hw, tip_shift, "#bar-3", color);
+                        // svg3_xy = draw_splitbar(svg2_xbar, svg3_y_max, new_each_data, second_data, margin, svg2_hw, tip_shift, "#bar-3", color);
+                        svg3_xy = set_splitbar(svg3_xy, svg2_xbar, svg3_y_max, new_each_data, second_data, second_xbar,margin, svg2_hw, tip_shift, "#bar-3", color);
+                        // d3.select("#bar-3")
+                        //     .select(".split_data")
+                        //     .remove()
+                        // d3.select("#bar-3")
+                        //     .selectAll("rect")
+                        //     .data(new_each_data)
+                        //     .transition()
+                        //     .attr("x", (d, i) => svg3_xy[0](svg2_xbar[i]))
+                        //     .attr("y", d => svg3_xy[1](d))
+                        //     .attr("fill", (d, i) => color(svg2_xbar[i]))
+                        //     .attr("height", d => svg3_xy[1](0) - svg3_xy[1](d))
+                        //     .attr("width", svg3_xy[0].bandwidth())
+                        //     .attr("opacity",1);
                         
                         }
                     }
                 })
 
-
-    d3.select("#bar-3")
-        .selectAll("rect")
-        .on("click", function (d, i) {
-            var split_data = [d / 2, d / 3, d / 4, d / 5, d / 6];
-            var new_xbar = ['a','b','c','d','e'];
-
-            var left_bound = parseFloat(d3.select(this).attr("x"));
-            var right_bound = parseFloat(d3.select(this).attr("width")) + left_bound;
-            var new_x = d3.scaleBand()
-                .domain(new_xbar)
-                .range([left_bound, right_bound])
-                .padding(0.1)
-            // console.log(d3.mouse(this));
-
-           var new_xAxis = g => g
-                .attr("transform", `translate(0,${svg2_hw.height - margin.bottom * 2})`)
-                .call(d3.axisBottom(new_x).tickSizeOuter(0))
-                .call(g => g.selectAll(".domain").remove())
-
-
-            var origin_bar = d3.select(this)
-                .attr("opacity",0)
-                // .attr("visibility","hidden")
-
-            // var new_svg = d3.select("#bar-3")
-                // .append("svg"+String(d))
-                // .attr("viewBox",[0,0,right_bound - left_bound,svg2_hw.height])
-
-            console.log("svg"+String(d));
-            // console.log(d3.select(this).html())
-            var new_g = d3.select("#bar-3")
-                        .select("svg")
-                        .append("g")
-                        .attr("transform","translate(0,0)")
-                        .attr("class","split_data"); //设置一个data名
-
-
-            new_g.selectAll("rect")
-                .data(split_data)
-                .join("rect")
-                // .transition()
-                .attr("x",(d, i) => new_x(new_xbar[i]))
-                .attr("y", d => svg3_xy[1](d))
-                .attr("fill", (d, i) => d3.select(this).attr('fill'))
-                .attr("height", d => svg3_xy[1](0) - svg3_xy[1](d))
-                .attr("width", new_x.bandwidth())
-                .attr("opacity",1)
-                // .attr("class",String(d3.select(this).attr("x")));
-            new_g.append("g")
-                .call(new_xAxis);
-            var tooltip = d3.select("#bar-3")
-                .select("svg")
-                .append("g")
-                .style("display", "none")
-            tooltip.append("text")
-                .attr("x", 15)
-                .attr("dy", "1.2em")
-                .style("text-anchor", "middle")
-                .attr("font-size", "30px")
-                .attr("font-weight", "bold");
-
-            var new_rects = new_g.selectAll("rect")
-                            .on("mouseover", function () {
-                            tooltip.style('display', null);})
-                            .on("mouseout", function () {
-                            tooltip.style('display', "none")})
-                            .on("mousemove", function (d, i) {
-                                var xPosition = d3.mouse(this)[0] - tip_shift.right;
-                                var yPosition = d3.mouse(this)[1] - tip_shift.top;
-                                tooltip.attr("transform", "translate(" + xPosition + "," + yPosition + ")");
-                                tooltip.select("text").text(new_xbar[i] + " : " + String(d));
-                            })
-                            .on("click", function(d, i)
-                            {
-                                origin_bar.transition()
-                                .attr("opacity",1);
-                                tooltip.remove()
-                                new_g.remove();
-                            })
-
-
-            tmp = d3.select(this);
-
-            console.log(d3.select(this).attr("class"));
-
-        })
 
     });
 var tmp;
