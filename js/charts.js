@@ -174,6 +174,22 @@ function set_splitbar(bar_svgs, xbar, y_max, first_data, second_data, second_xba
     var svg = svgs[2];
     var svg_tooltip = svgs[3];
 
+    // 直接在原图上修改
+    svgs[2].selectAll(".split_data") // 这个类名是下面设置的，目的是在更新图表时将原先的split rect给删除掉
+        .remove()
+    svgs[2].selectAll("rect")
+        .data(first_data)
+        .transition()
+        .attr("x", (d, i) => svgs[0](xbar[i]))
+        .attr("y", d => svgs[1](d))
+        .attr("fill", (d, i) => color(xbar[i]))
+        .attr("height", d => svgs[1](0) - svgs[1](d))
+        .attr("width", svgs[0].bandwidth())
+        .attr("opacity",1);
+    svgs[2].selectAll("rect")
+        .on("mouseover", function () {
+            svgs[3].style('display', null);}) // 修复bug，在先点击成小块，再修改first_data变成大块的时候未恢复tooltip
+
     svg.selectAll("rect")
         .on("click", function (d, i) {
 
@@ -334,31 +350,15 @@ var state_age_data = d3.csv("data/us-population-state-age.csv", (d, i, columns) 
                             var this_data = [];
                             var this_xbar = [];
                             for (var jj = 0; jj < ii + 2; jj++) {
-                                this_data.push(new_each_data[ii] / (ii + 2));
+                                this_data.push(new_each_data[ii] / (jj + 2));
                                 this_xbar.push(all_xbar[jj]);
                             }
                             second_data.push(this_data);
                             second_xbar.push(this_xbar);
                         }
 
-                        // TODO:严重bug——使用了remove逻辑来更新图表，失去动画效果
-                        svg3_xy[2].remove();
-                        svg3_xy = draw_bar(svg2_xbar, svg3_y_max, new_each_data, margin, svg2_hw, tip_shift, "#bar-3", color);
-                        // svg3_xy = draw_splitbar(svg2_xbar, svg3_y_max, new_each_data, second_data, margin, svg2_hw, tip_shift, "#bar-3", color);
-                        svg3_xy = set_splitbar(svg3_xy, svg2_xbar, svg3_y_max, new_each_data, second_data, second_xbar,margin, svg2_hw, tip_shift, "#bar-3", color);
-                        // d3.select("#bar-3")
-                        //     .select(".split_data")
-                        //     .remove()
-                        // d3.select("#bar-3")
-                        //     .selectAll("rect")
-                        //     .data(new_each_data)
-                        //     .transition()
-                        //     .attr("x", (d, i) => svg3_xy[0](svg2_xbar[i]))
-                        //     .attr("y", d => svg3_xy[1](d))
-                        //     .attr("fill", (d, i) => color(svg2_xbar[i]))
-                        //     .attr("height", d => svg3_xy[1](0) - svg3_xy[1](d))
-                        //     .attr("width", svg3_xy[0].bandwidth())
-                        //     .attr("opacity",1);
+                         svg3_xy = set_splitbar(svg3_xy, svg2_xbar, svg3_y_max, new_each_data, second_data, second_xbar,margin, svg2_hw, tip_shift, "#bar-3", color);
+
                         
                         }
                     }
