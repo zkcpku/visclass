@@ -223,10 +223,28 @@ function set_splitbar(bar_svgs, xbar, y_max, first_data, second_data, second_xba
                         .attr("transform","translate(0,0)")
                         .attr("class","split_data"); //设置一个class名，方便进行批量操作（比如批量删除）
 
+            // 希望增加一个分裂成小块的动画效果，因此在这里进行修改
+            // 基本逻辑：先产生多个和原高相同的小块，再进行transition，因此只要造一个fake_split_data就行了
+            var fake_split_data = [];
+            for (var i = 0; i < split_data.length; i++) {
+                fake_split_data.push(d); // 和原方块的高 相同
+            }
+            new_g.selectAll("rect")
+                .data(fake_split_data)
+                .join("rect")
+                // .transition()
+                .attr("x",(d, i) => new_x(new_xbar[i]))
+                .attr("y", d => svgs[1](d))
+                .attr("fill", (d, i) => origin_bar.attr('fill'))
+                .attr("height", d => svgs[1](0) - svgs[1](d))
+                .attr("width", new_x.bandwidth())
+                .attr("opacity",0) //fake块做成透明的，这样有渐变的感觉,还不容易卡bug被看到
+
+
             new_g.selectAll("rect")
                 .data(split_data)
                 .join("rect")
-                // .transition()
+                .transition()
                 .attr("x",(d, i) => new_x(new_xbar[i]))
                 .attr("y", d => svgs[1](d))
                 .attr("fill", (d, i) => origin_bar.attr('fill'))
@@ -287,6 +305,7 @@ var state_age_data = d3.csv("data/us-population-state-age.csv", (d, i, columns) 
     }
     
     var sum_state_name = "states : ";
+    
     d3.select("#bar-2-text")
         .transition()
         .text(sum_state_name);
@@ -294,7 +313,6 @@ var state_age_data = d3.csv("data/us-population-state-age.csv", (d, i, columns) 
     var svg2_y_max = d3.max(data, d => d3.max(d3.values(d).slice(1)));
     var svg3_y_max = d3.max(data, d => d3.max(d3.values(d).slice(1,-1)));
     var svg2_xy = draw_bar(svg2_xbar, svg2_y_max, each_data, margin, svg2_hw, tip_shift, "#bar-2", color);
-
     var svg3_xy = draw_bar(svg2_xbar, svg3_y_max, each_data, margin, svg2_hw, tip_shift, "#bar-3", color);
 
     
