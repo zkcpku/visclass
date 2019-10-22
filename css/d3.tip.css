@@ -1,0 +1,45 @@
+body{
+    background: white;
+}
+
+circle{
+    fill:red;
+    fill-opacity: .5;
+    stroke:#fff;
+    stroke-width: .5;
+}
+td{
+    color: #fff;
+}
+.d3-tip {
+line-height: 1.5;
+font-weight: normal;
+    font-family: Helvetica, Arial, sans-serif;
+    font-size:13px;
+padding: 10px;
+background: rgba(0, 0, 0, 0.8);
+color: #fff;
+border-radius: 3px;
+    position:relative;
+    z-index:101;
+}
+
+/* Creates a small triangle extender for the tooltip */
+.d3-tip:after {
+box-sizing: border-box;
+display: inline;
+font-size: 20px;
+width: 100%;
+line-height: .5;
+color: rgba(0, 0, 0, 0.8);
+content: "\25BC";
+position: absolute;
+text-align: center;
+}
+
+/* Style northward tooltips differently */
+.d3-tip.n:after {
+margin: -1px 0 0 0;
+top: 100%;
+left: 0;
+}
