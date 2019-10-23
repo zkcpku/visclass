@@ -1,5 +1,5 @@
 var margin = ({top: 10, right: 10, bottom: 20, left: 40});
-var tip_shift = ({top:50, right: 50});
+var tip_shift = ({top:100, right: 100});
 var OPACITY_SUM = 1 + 0.2;
 svg_hw = {height: 1200, width : 1200};
 svg2_hw = {height: 600, width : 1200};
@@ -273,7 +273,8 @@ function set_splitbar(bar_svgs, xbar, y_max, first_data, second_data, second_xba
                                 var xPosition = d3.mouse(this)[0] - tip_shift.right;
                                 var yPosition = d3.mouse(this)[1] - tip_shift.top;
                                 tooltip.attr("transform", "translate(" + xPosition + "," + yPosition + ")");
-                                tooltip.select("text").text(new_xbar[i] + " : " + String(d));
+                                // tooltip.select("text").text(new_xbar[i] + " : " + String(d));
+                                tooltip.select("text").html("<tspan x='0' dy='1.2em'>" + new_xbar[i] + " : </tspan><tspan x='0' dy='1.2em'>" + String(d) + "</tspan>");
                             })
                             .on("click", function(d, i)
                             {
