@@ -1,19 +1,44 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-	<meta charset="UTF-8">
+	<meta charset="utf-8">
 	<title>homework1</title>
 	<script src="js/d3.js"></script>
 	<link rel="stylesheet" type="text/css" href="css/index.css">
 </head>
 <body style="text-align: center;">
-	<text id="bar-2-text"></text>
+	<p>
+	<text>展示了面上、地区、重点三类基金各部门统计，以及负责人年龄，<b>可切换项数/年龄</b>：</text>
+	<select data-placeholder="金额or项数" class="chosen-select" id="category_select" onchange="bar_chart_change(this.options[this.options.selectedIndex].value)">
+		<option id="项数" selected>项数</option>
+		<option id="金额">金额</option>
+	</select>
+	</p>
+	<p>
+		<text>使用说明</text>
+		<br>
+		<text>上表为 项目按申请与资助情况统计，可在左下角表中选择不同的基金，会展示累加结果；点开每一个大方格可以看见其中的小项情况</text>
+		<br>
+		<text>左下角为 展示三个基金总的统计结果，点击每一个大方格可以选中该基金，在上表中显示统计求和结果</text>
+		<br>
+		<text>右下角为 年龄统计，根据年龄大小使用不同色调</text>
+		<br>
+		<text>所有表格据支持tooltip，鼠标放置以显示详情</text>
+		<br>
+		<text>加载的csv表格文件较多，网页可能会偶尔卡顿，请记得刷新哦</text>
+	</p>
 	<div>
-	<div id='bar-1' style="height: 700px; width: 700px; float:left;"></div>
-	<!-- <div id='bar-2' style="height: 600px; width: 600px;float:left;margin-left:10px;"></div> -->
-	
-	<div id='bar-2' style="height: 350px; width: 700px;float:right;"></div>
-	<div id='bar-3' style="height: 350px; width: 700px;float: right;"></div>
+		<div id="bar-1-text"></div>
+		<div id='bar-1' style="height: 350px; width: 1400px;"></div>
+		<!-- <div id='bar-2' style="height: 600px; width: 600px;float:left;margin-left:10px;"></div> -->
+		<div style="height: 350px; width: 700px;float:left;">
+			<div id="bar-2-text"></div>
+			<div id='bar-2' ></div>
+		</div>
+		<div style="height: 350px; width: 700px;float: right;">
+			<div id="bar-3-text"></div>
+			<div id='bar-3'></div>
+		</div>
 	</div>
 	<script src="js/charts.js"></script>
 
